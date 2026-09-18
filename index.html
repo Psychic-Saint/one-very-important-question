@@ -122,7 +122,8 @@
   .face-disc.sad.shake .face-move{animation:headshake .6s ease-in-out}
   .face-disc .eyes{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none}
   .eyes .pupil{transform:translate(var(--px,0px), var(--py,0px)); transition:transform .14s ease-out}
-  .eyes .lid{transform:translateY(-130px); animation:blink2 4.6s infinite}
+  .eyes .lid{transform:translateY(-130px); transition:transform .07s ease-in}
+  .face-disc.blinking .eyes .lid{transform:translateY(0)}
   @keyframes blink2{0%,90%,100%{transform:translateY(-130px)} 93%,94%{transform:translateY(0)} 97%{transform:translateY(-130px)} 98.5%{transform:translateY(0)}}
   .face-disc.roll .eyes .pupil{animation:eyeroll2 1.3s linear}
   @keyframes eyeroll2{0%{transform:translate(0px,0px)} 6%{transform:translate(0px,10px)} 6.0%{transform:translate(0.0px,10.0px)} 10.4%{transform:translate(-10.5px,9.5px)} 14.8%{transform:translate(-20.0px,8.1px)} 19.2%{transform:translate(-27.5px,5.9px)} 23.6%{transform:translate(-32.3px,3.1px)} 28.0%{transform:translate(-34.0px,0.0px)} 32.4%{transform:translate(-32.3px,-8.7px)} 36.8%{transform:translate(-27.5px,-16.5px)} 41.2%{transform:translate(-20.0px,-22.7px)} 45.6%{transform:translate(-10.5px,-26.6px)} 50.0%{transform:translate(-0.0px,-28.0px)} 54.4%{transform:translate(10.5px,-26.6px)} 58.8%{transform:translate(20.0px,-22.7px)} 63.2%{transform:translate(27.5px,-16.5px)} 67.6%{transform:translate(32.3px,-8.7px)} 72.0%{transform:translate(34.0px,-0.0px)} 76.4%{transform:translate(32.3px,3.1px)} 80.8%{transform:translate(27.5px,5.9px)} 85.2%{transform:translate(20.0px,8.1px)} 89.6%{transform:translate(10.5px,9.5px)} 94.0%{transform:translate(0.0px,10.0px)} 100%{transform:translate(0px,0px)}}
@@ -176,6 +177,11 @@
     font:600 15px var(--ui); color:var(--text); color-scheme:dark;
     background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 12px;
   }
+  .namebox{display:flex; flex-direction:column; gap:10px; margin:6px auto 0; max-width:380px; text-align:left}
+  .namebox label{font:800 13px/1 var(--ui); letter-spacing:.16em; text-transform:uppercase; color:var(--cyan)}
+  .namebox input{font:600 20px var(--ui); color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:16px; padding:14px 16px; width:100%}
+  .namebox input::placeholder{color:var(--muted)}
+  .namebox input:focus{border-color:var(--cyan); outline:none; box-shadow:0 0 0 4px rgba(34,211,238,.2)}
   .lock{display:block; width:100%; margin-top:24px}
   .lock-btn{width:100%; background:linear-gradient(90deg,var(--pink),var(--butter)); box-shadow:0 12px 34px -10px rgba(255,79,147,.9)}
   .lock-btn[aria-disabled="true"]{opacity:.55}
@@ -289,6 +295,20 @@
   /* Optional: put Eddie's WhatsApp number here in international format, e.g. '27821234567'.
      Left empty, the button opens WhatsApp so she can pick him from her chats. */
   const EDDIE_WHATSAPP = '27843232662';
+  /* Names are saved to Eddie's Supabase database (insert-only for visitors). */
+  const SB_URL = 'https://sdvcetthmsqcaojjtkjw.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkdmNldHRobXNxY2Fvamp0a2p3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MzUwMjEsImV4cCI6MjEwNTMxMTAyMX0.BUXpuMC9HWAs75Lw9wWzE6m7X023HKQy-llD57R_BEE';
+  const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function saveRSVP(){
+    try {
+      return fetch(SB_URL + '/rest/v1/rsvps', {
+        method:'POST',
+        headers:{apikey:SB_KEY, Authorization:'Bearer ' + SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal'},
+        body: JSON.stringify({name: plan.name, date_picked: isoDay(plan.date), time_picked: plan.time + (plan.timeLabel ? ' (' + plan.timeLabel + ')' : ''), vibe: plan.vibe || 'Eddie decides', no_attempts: tries, ref}),
+        keepalive: true
+      }).then(r => r.ok).catch(() => false);
+    } catch { return Promise.resolve(false); }
+  }
 
   const $ = s => document.querySelector(s);
   const yes = $('#yes'), no = $('#no'), taunt = $('#taunt'), count = $('#count'), card = $('#card');
@@ -483,13 +503,16 @@
     document.querySelectorAll('.face-disc').forEach(d => { d.classList.remove('roll'); void d.offsetWidth; d.classList.add('roll'); clearTimeout(d._r); d._r = setTimeout(() => d.classList.remove('roll'), 1350); });
   }
   if (!reduced){
-    setTimeout(rollEyes, 1600);
+    // when the cursor stops, ease the eyes back to looking at her
     setInterval(() => {
       if (performance.now() - lastLook < 2500) return;
-      if (Math.random() < 0.45) return rollEyes();
-      const x = (Math.random()*2-1)*30, y = (Math.random()*2-1)*10;
-      document.querySelectorAll('.face-disc .pupil').forEach(pp => { pp.style.setProperty('--px', x.toFixed(1)+'px'); pp.style.setProperty('--py', y.toFixed(1)+'px'); });
-    }, 1800);
+      document.querySelectorAll('.face-disc .pupil').forEach(pp => { pp.style.setProperty('--px', '0px'); pp.style.setProperty('--py', '0px'); });
+    }, 1000);
+    // natural blinking: one quick blink every 2.5 to 6 seconds
+    (function blink(){
+      document.querySelectorAll('.face-disc').forEach(d => { d.classList.add('blinking'); setTimeout(() => d.classList.remove('blinking'), 160); });
+      setTimeout(blink, 2500 + Math.random()*3500);
+    })();
   }
 
   /* card tilt + eyes follow */
@@ -575,7 +598,7 @@
     const t = w.querySelector('.tear'); t.removeAttribute('id'); t.setAttribute('hidden','');
     return w.outerHTML;
   };
-  const plan = {date:null, time:null, timeLabel:null, vibe:null};
+  const plan = {date:null, time:null, timeLabel:null, vibe:null, name:''};
   let ref = '';
   const fmtLong = d => d.toLocaleDateString('en-ZA', {weekday:'long', day:'numeric', month:'long'});
   const pad2 = n => String(n).padStart(2,'0');
@@ -671,6 +694,31 @@
       if (!plan.date) return nudge("Nice try. Pick a day first.");
       if (!plan.time) return nudge("A time too please. Eddie needs to iron a shirt.");
       ref = 'EB-' + Math.random().toString(36).slice(2,7).toUpperCase();
+      askName();
+    });
+  }
+  function askName(){
+    card.innerHTML = `
+      <span class="stamp">Almost</span>
+      <p class="from">${esc(fmtLong(plan.date))} at ${esc(plan.time)}. Locked in.</p>
+      <h1>One last <span class="pop">thing.</span></h1>
+      <p class="sub">Who's saying yes? Your name goes on the ticket so Eddie knows it's really you.</p>
+      ${blobSVG()}
+      <form class="namebox" id="nameForm" autocomplete="on">
+        <label for="herName">Your name</label>
+        <input id="herName" name="name" type="text" maxlength="60" autocomplete="given-name" placeholder="Type your name" required>
+        <button type="submit" class="btn lock-btn" id="signBtn">Sign the ticket</button>
+      </form>
+      <p class="hint" id="nameHint"></p>`;
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
+    const input = $('#herName'); setTimeout(() => { try { input.focus({preventScroll:true}); } catch {} }, 400);
+    $('#nameForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const n = input.value.trim().replace(/\s+/g, ' ');
+      if (!n){ $('#nameHint').textContent = "Nice try. Eddie needs a name, not a mystery."; return; }
+      plan.name = n.slice(0, 60);
+      saveRSVP();
       showTicket();
       sendToEddie(true);
     });
@@ -683,7 +731,7 @@
   function summary(){
     const vibe = plan.vibe || 'Eddie decides';
     const time = plan.time + (plan.timeLabel ? ' (' + plan.timeLabel + ')' : '');
-    return `Hey Eddie 😊\n\nI said YES! 💘 ${tries ? `(after trying to say no ${tries} time${tries===1?'':'s'}, but the button wouldn't let me)` : '(first try, no hesitation)'}\n\nHere's our date:\n📅 ${fmtLong(plan.date)}\n⏰ ${time}\n✨ ${vibe}\n\nSnacks are on you. No take-backs. See you then! 🥰`;
+    return `Hey Eddie, it's ${plan.name} 😊\n\nI said YES! 💘 ${tries ? `(after trying to say no ${tries} time${tries===1?'':'s'}, but the button wouldn't let me)` : '(first try, no hesitation)'}\n\nHere's our date:\n📅 ${fmtLong(plan.date)}\n⏰ ${time}\n✨ ${vibe}\n\nSnacks are on you. No take-backs. See you then! 🥰`;
   }
   const waLink = () => `https://wa.me/${EDDIE_WHATSAPP}?text=${encodeURIComponent(summary())}`;
 
@@ -713,7 +761,7 @@
     label('VIBE', 14, 108); value(plan.vibe || 'Eddie decides', 14, 115, 13);
     doc.setDrawColor(183,214,223); doc.setLineDashPattern([1.5,1.5],0); doc.line(14, 122, W-14, 122); doc.setLineDashPattern([],0);
     doc.setTextColor(80,112,124); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-    doc.text('Agreed on ' + new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'}), 14, 130);
+    doc.text('Signed by ' + plan.name.slice(0,28) + ', ' + new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'}), 14, 130);
     doc.text('Witness: the No button', W-14, 130, {align:'right'});
     // terms
     doc.setTextColor(232,251,255); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text('Terms & Conditions', 10, 148);
@@ -764,6 +812,7 @@
       <div class="ticket">
         <div class="top"><b>ADMIT TWO</b><span>Non-refundable</span></div>
         <dl class="body">
+          <div class="wide"><dt>Guest of honour</dt><dd>${esc(plan.name)}</dd></div>
           <div class="wide"><dt>Date</dt><dd>${fmtLong(plan.date)}</dd></div>
           <div><dt>Time</dt><dd>${plan.time}${plan.timeLabel ? ` <small style="font-size:15px">${plan.timeLabel}</small>` : ''}</dd></div>
           <div><dt>Vibe</dt><dd>${vibe.replace('&','&amp;')}</dd></div>
@@ -777,9 +826,9 @@
             <li>Returns, refunds and "actually wait" are not accepted.</li>
           </ol>
         </div>
-        <div class="sig"><span>Agreed on ${signed}</span><span>Witness: the No button</span></div>
+        <div class="sig"><span>Signed by ${esc(plan.name)} on ${signed}</span><span>Witness: the No button</span></div>
       </div>
-      <p class="sub" style="margin-top:14px">Last step: send Eddie your ticket on WhatsApp. Pick him from your chats and hit send.</p>
+      <p class="sub" style="margin-top:14px">Last step, ${esc(plan.name)}: send Eddie your ticket on WhatsApp. Pick him from your chats and hit send.</p>
       <p class="hint" id="sendStatus"></p>
       <div class="actions">
         <button type="button" class="btn wa" id="sendPdf">Send Eddie the PDF ticket</button>
@@ -790,7 +839,7 @@
     if (!reduced) { confetti(); window.__worldBurst && window.__worldBurst(); }
     scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
     $('#sendPdf').addEventListener('click', () => sendToEddie(false));
-    $('#redo').addEventListener('click', () => { done = false; card.style.transform = ''; plan.date = plan.time = plan.timeLabel = plan.vibe = null; yes.click(); });
+    $('#redo').addEventListener('click', () => { done = false; card.style.transform = ''; plan.date = plan.time = plan.timeLabel = plan.vibe = null; plan.name = ''; yes.click(); });
   }
 
   /* ---------- confetti ---------- */
