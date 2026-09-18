@@ -141,8 +141,8 @@
   canvas#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60}
 
   footer.credit{position:relative; z-index:1; font:400 12px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:rgba(143,179,192,.55); text-align:center; padding-inline:16px}
-  footer.credit a{color:inherit; text-decoration:none; transition:color .3s}
-  footer.credit a:hover, footer.credit a:focus-visible{color:var(--gold)}
+  footer.credit span{transition:color .3s}
+  footer.credit span:hover{color:var(--gold)}
 
   @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
   @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -204,10 +204,11 @@
     <p class="count" id="count" hidden></p>
   </section>
 
-  <footer class="credit"><a href="https://weblueprints.co.za" target="_blank" rel="noopener">Designed &amp; Crafted by Warm &amp; Easy Blueprints</a></footer>
+  <footer class="credit"><span>Designed &amp; Crafted by Eddie Bila</span></footer>
 </main>
 <canvas id="confetti"></canvas>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 (() => {
   /* Optional: put Eddie's WhatsApp number here in international format, e.g. '27821234567'.
@@ -331,6 +332,7 @@
     return svg.outerHTML;
   };
   const plan = {date:null, time:null, timeLabel:null, vibe:null};
+  let ref = '';
   const fmtLong = d => d.toLocaleDateString('en-ZA', {weekday:'long', day:'numeric', month:'long'});
   const pad2 = n => String(n).padStart(2,'0');
   const isoDay = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -385,7 +387,7 @@
         </div>
       </div>
 
-      <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in &amp; tell Eddie</button></div>
+      <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in</button></div>
       <p class="hint" id="hint"></p>`;
     card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
     if (!reduced) confetti();
@@ -424,8 +426,9 @@
     $('#lockIn').addEventListener('click', () => {
       if (!plan.date) return nudge("Nice try. Pick a day first.");
       if (!plan.time) return nudge("A time too please. Eddie needs to iron a shirt.");
+      ref = 'EB-' + Math.random().toString(36).slice(2,7).toUpperCase();
       showTicket();
-      try { window.open(waLink(), '_blank', 'noopener'); } catch {}
+      sendToEddie(true);
     });
   }
   function nudge(msg){
@@ -439,10 +442,75 @@
     return `Hey Eddie 😊\n\nI said YES! 💘 ${tries ? `(after trying to say no ${tries} time${tries===1?'':'s'}, but the button wouldn't let me)` : '(first try, no hesitation)'}\n\nHere's our date:\n📅 ${fmtLong(plan.date)}\n⏰ ${time}\n✨ ${vibe}\n\nSnacks are on you. No take-backs. See you then! 🥰`;
   }
   const waLink = () => `https://wa.me/${EDDIE_WHATSAPP}?text=${encodeURIComponent(summary())}`;
+
+  function buildPDF(){
+    if (!window.jspdf) return null;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'portrait', unit:'mm', format:[110, 178]});
+    doc.setProperties({title:'Date Ticket ' + ref, author:'Eddie Bila', creator:'Eddie Bila', subject:"It's a date"});
+    const W = 110, H = 178;
+    doc.setFillColor(0,20,29); doc.rect(0,0,W,H,'F');
+    // colourful header bands
+    [[255,79,147],[255,216,77],[94,240,176],[34,211,238],[167,139,250]].forEach((c,i) => { doc.setFillColor(...c); doc.rect(i*W/5, 0, W/5+0.5, 5, 'F'); });
+    doc.setTextColor(138,233,247); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text('BOOKING REFERENCE ' + ref, 10, 16, {charSpace:0.6});
+    doc.setTextColor(232,251,255); doc.setFontSize(26); doc.text("It's a date.", 10, 30);
+    doc.setTextColor(255,216,77); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.text(tries ? `She tried to say no ${tries} time${tries===1?'':'s'}. The button said no to that.` : 'First try. No hesitation. Iconic.', 10, 38, {maxWidth:90});
+    // white ticket
+    doc.setFillColor(247,253,255); doc.roundedRect(8, 46, W-16, 92, 5, 5, 'F');
+    doc.setFillColor(255,79,147); doc.roundedRect(8, 46, W-16, 16, 5, 5, 'F'); doc.rect(8, 54, W-16, 8, 'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text('ADMIT TWO', 14, 57);
+    doc.setFontSize(7); doc.text('NON-REFUNDABLE', W-14, 57, {align:'right'});
+    const label = (t,x,y) => { doc.setTextColor(80,112,124); doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.text(t, x, y, {charSpace:0.8}); };
+    const value = (t,x,y,size=14) => { doc.setTextColor(0,20,29); doc.setFont('helvetica','bold'); doc.setFontSize(size); doc.text(t, x, y, {maxWidth:80}); };
+    label('DATE', 14, 72); value(fmtLong(plan.date), 14, 79);
+    label('TIME', 14, 90); value(plan.time + (plan.timeLabel ? '  ' + plan.timeLabel : ''), 14, 97, 13);
+    label('VIBE', 14, 108); value(plan.vibe || 'Eddie decides', 14, 115, 13);
+    doc.setDrawColor(183,214,223); doc.setLineDashPattern([1.5,1.5],0); doc.line(14, 122, W-14, 122); doc.setLineDashPattern([],0);
+    doc.setTextColor(80,112,124); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    doc.text('Agreed on ' + new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'}), 14, 130);
+    doc.text('Witness: the blob', W-14, 130, {align:'right'});
+    // terms
+    doc.setTextColor(232,251,255); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text('Terms & Conditions', 10, 148);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(143,179,192);
+    ['1. Snacks will be provided. Good ones.','2. Bad jokes are included at no extra cost.','3. No refunds, no take-backs, no "actually wait".']
+      .forEach((t,i) => doc.text(t, 10, 154 + i*4.6));
+    doc.setFontSize(6.5); doc.setTextColor(90,120,130); doc.text('DESIGNED & CRAFTED BY EDDIE BILA', W/2, H-5, {align:'center'});
+    return doc;
+  }
+
+  async function sendToEddie(auto){
+    const status = $('#sendStatus');
+    const say = t => { if (status) status.textContent = t; };
+    const doc = buildPDF();
+    const name = `Date-Ticket-${ref}.pdf`;
+    const text = summary();
+    if (doc){
+      const file = new File([doc.output('blob')], name, {type:'application/pdf'});
+      if (navigator.canShare && navigator.canShare({files:[file]})){
+        try {
+          await navigator.share({files:[file], text, title:"It's a date"});
+          say('Sent. Eddie is probably doing a little dance right now.');
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError'){ say('Changed your mind? Tap the pink button to send it.'); return; }
+        }
+      }
+      // Desktop or no share sheet: save the PDF, then open Eddie's chat so it can be attached
+      try { doc.save(name); } catch {}
+      window.open(waLink(), '_blank', 'noopener');
+      say('Your ticket PDF was saved. WhatsApp is open on Eddie\'s chat, so attach it there with the paperclip.');
+      return;
+    }
+    window.open(waLink(), '_blank', 'noopener');
+    say('WhatsApp is open with your confirmation for Eddie. Just hit send.');
+  }
+
   function showTicket(){
     const vibe = plan.vibe || 'Eddie decides';
     const signed = new Date().toLocaleDateString('en-ZA', {day:'numeric', month:'long', year:'numeric'});
-    const ref = 'WEB-' + Math.random().toString(36).slice(2,7).toUpperCase();
+    
     const waURL = waLink();
     card.innerHTML = `
       <span class="stamp">Confirmed</span>
@@ -467,21 +535,17 @@
         </div>
         <div class="sig"><span>Agreed on ${signed}</span><span>Witness: the blob</span></div>
       </div>
-      <p class="sub" style="margin-top:14px">WhatsApp should have opened with a message for Eddie. Just hit send. If it didn't, tap below.</p>
+      <p class="sub" style="margin-top:14px">Last step: send Eddie your ticket on WhatsApp. Pick him from your chats and hit send.</p>
+      <p class="hint" id="sendStatus"></p>
       <div class="actions">
-        <a class="btn wa" href="${waURL}" target="_blank" rel="noopener">Send Eddie the confirmation</a>
-        <button type="button" class="btn copy" id="copyBtn">Copy details</button>
+        <button type="button" class="btn wa" id="sendPdf">Send Eddie the PDF ticket</button>
+        <a class="btn copy" href="${waURL}" target="_blank" rel="noopener">Just text him</a>
       </div>
       <div class="actions"><button type="button" class="btn ghost" id="redo">Change the plan</button></div>`;
     card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
     if (!reduced) confetti();
     scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
-    $('#copyBtn').addEventListener('click', async e => {
-      const btn = e.currentTarget;
-      try { await navigator.clipboard.writeText(summary()); btn.textContent = 'Copied!'; }
-      catch { btn.textContent = 'Screenshot it instead'; }
-      setTimeout(() => btn.textContent = 'Copy details', 2200);
-    });
+    $('#sendPdf').addEventListener('click', () => sendToEddie(false));
     $('#redo').addEventListener('click', () => { done = false; card.style.transform = ''; plan.date = plan.time = plan.timeLabel = plan.vibe = null; yes.click(); });
   }
 
