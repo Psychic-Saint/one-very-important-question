@@ -42,11 +42,11 @@
   }
   @keyframes drift{to{transform:translate3d(3%,-2%,0) rotate(4deg)}}
 
-  .stage{position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-inline:16px; padding-block:40px 20px}
+  .stage{position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-inline:16px; padding-block:26px 12px}
   .card{
     position:relative; width:100%; max-width:600px; text-align:center;
     background:linear-gradient(160deg, rgba(10,51,72,.92), rgba(4,32,45,.94));
-    border:1px solid var(--line); border-radius:30px; padding:34px 26px 30px;
+    border:1px solid var(--line); border-radius:30px; padding:26px 22px 18px;
     box-shadow:0 0 0 1px rgba(34,211,238,.08), 0 30px 80px -20px rgba(0,0,0,.7), 0 0 60px -10px rgba(34,211,238,.35);
     backdrop-filter:blur(8px); transform-style:preserve-3d; transition:transform .2s ease-out;
     animation:arrive .9s cubic-bezier(.2,1.2,.4,1) both;
@@ -67,11 +67,11 @@
     padding:4px 14px; font:800 13px/1.2 var(--ui); letter-spacing:.14em; text-transform:uppercase;
     box-shadow:0 6px 18px -4px rgba(255,216,77,.6);
   }
-  .from{margin:0; font:400 21px/1.2 var(--hand); color:var(--cyan-soft)}
-  h1{font-family:var(--display); font-weight:400; font-size:clamp(38px,9vw,62px); line-height:1.02; margin:8px 0 6px; text-wrap:balance; letter-spacing:.01em}
+  .from{margin:0; font:400 19px/1.15 var(--hand); color:var(--cyan-soft)}
+  h1{font-family:var(--display); font-weight:400; font-size:clamp(32px, min(8.5vw, 5vh + 14px), 58px); line-height:1.02; margin:6px 0 4px; text-wrap:balance; letter-spacing:.01em}
   h1 .pop{background:linear-gradient(90deg,var(--pink),var(--butter),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent}
-  .sub{margin:0 auto 4px; max-width:34ch; font:400 23px/1.25 var(--hand); color:var(--text)}
-  .face3d{width:196px; height:293px; margin:10px auto 8px; perspective:800px; position:relative}
+  .sub{margin:0 auto 2px; max-width:36ch; font:400 21px/1.2 var(--hand); color:var(--text)}
+  .face3d{height:clamp(140px, calc(100vh - 470px), 270px); height:clamp(140px, calc(100svh - 470px), 270px); aspect-ratio:822/1229; width:auto; margin:4px auto 12px; perspective:800px; position:relative}
   .face3d::after{content:""; position:absolute; left:14%; right:14%; bottom:-16px; height:18px; border-radius:50%; background:radial-gradient(closest-side, rgba(0,0,0,.6), transparent); filter:blur(2px); animation:shadowpulse 3.2s ease-in-out infinite}
   @keyframes shadowpulse{50%{transform:scaleX(.82); opacity:.7}}
   .face-disc{--rx:0deg; --ry:0deg; --gx:35%; --gy:25%; position:relative; width:100%; height:100%;
@@ -129,8 +129,8 @@
   .face-disc.sad .eyes .lid{animation:none; transform:translateY(-95px)}
   .face-disc.love .eyes{opacity:0; transition:opacity .3s}
   .face3d.wobble{transform-origin:50% 90%}
-  .taunt{min-height:1.4em; margin:8px 0 16px; font:700 25px/1.2 var(--hand); color:var(--butter)}
-  .buttons{display:flex; gap:20px; justify-content:center; align-items:center; flex-wrap:wrap; min-height:86px}
+  .taunt{min-height:1.2em; margin:2px 0 8px; font:700 22px/1.2 var(--hand); color:var(--butter)}
+  .buttons{display:flex; gap:20px; justify-content:center; align-items:center; flex-wrap:wrap; min-height:66px}
 
   button,.btn{
     font-family:var(--display); font-size:26px; letter-spacing:.02em; cursor:pointer; text-decoration:none;
@@ -147,7 +147,7 @@
   #yes:hover{box-shadow:0 0 0 7px rgba(34,211,238,.25), 0 14px 40px -6px rgba(34,211,238,1)}
   #no{background:transparent; color:var(--pink); border:2px solid var(--pink); z-index:40; white-space:nowrap; box-shadow:0 0 22px -6px rgba(255,79,147,.8)}
   #no.loose{position:fixed; background:var(--space); transition:left .28s cubic-bezier(.2,1.4,.4,1), top .28s cubic-bezier(.2,1.4,.4,1), transform .2s}
-  .count{margin:18px 0 0; font-size:14px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-variant-numeric:tabular-nums}
+  .count{margin:8px 0 0; font-size:14px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-variant-numeric:tabular-nums}
 
   /* planner */
   .step{margin-top:22px; text-align:left}
@@ -227,7 +227,7 @@
   .spark svg{width:1em; height:1em; display:block}
   @keyframes sparkfloat{from{transform:translate(var(--x),var(--y)) scale(1) rotate(0); opacity:1} to{transform:translate(calc(var(--x) + var(--dx)), calc(var(--y) + var(--dy))) scale(.2) rotate(var(--r)); opacity:0}}
   @media (max-width:480px){
-    .card{padding:30px 18px 24px}
+    .card{padding:24px 16px 16px}
     button,.btn{font-size:22px; padding:12px 28px}
   }
   @media (prefers-reduced-motion:reduce){
@@ -444,10 +444,10 @@
     const dot = $('#curDot'), ring = $('#curRing'), label = $('#curLabel');
     document.documentElement.classList.add('fancy-cursor');
     dot.hidden = false; ring.hidden = false; dot.style.opacity = ring.style.opacity = '0';
-    let x = innerWidth/2, y = innerHeight/2, rx = x, ry = y, lastSpark = 0;
+    let x = innerWidth/2, y = innerHeight/2, rx = x, ry = y, lastSpark = 0, moved = false;
     addEventListener('pointermove', e => {
       x = e.clientX; y = e.clientY;
-      if (dot.style.opacity === '0'){ dot.style.opacity = ring.style.opacity = '1'; rx = x; ry = y; }
+      if (!moved){ moved = true; dot.style.opacity = ring.style.opacity = '1'; rx = x; ry = y; }
       dot.style.transform = `translate(${x}px, ${y}px)`;
       const now = performance.now();
       if (now - lastSpark > 45){ lastSpark = now; spark(x, y, false); }
@@ -465,7 +465,7 @@
     addEventListener('pointerdown', () => ring.classList.add('press'));
     addEventListener('pointerup', () => ring.classList.remove('press'));
     document.addEventListener('mouseleave', () => { dot.style.opacity = ring.style.opacity = '0'; });
-    document.addEventListener('mouseenter', () => { dot.style.opacity = ring.style.opacity = '1'; });
+    document.addEventListener('mouseenter', () => { if (moved) dot.style.opacity = ring.style.opacity = '1'; });
     (function follow(){
       rx += (x - rx) * 0.2; ry += (y - ry) * 0.2;
       ring.style.transform = `translate(${rx}px, ${ry}px)`;
