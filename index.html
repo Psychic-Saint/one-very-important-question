@@ -28,6 +28,8 @@
     margin:0; background:var(--space); color:var(--text);
     font-family:var(--ui); font-size:17px; overflow-x:hidden;
   }
+  canvas#world{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0; transition:opacity 1.2s ease}
+  canvas#world.on{opacity:1}
   canvas#sky{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none}
   .aurora{
     position:fixed; inset:-20%; z-index:0; pointer-events:none; filter:blur(70px); opacity:.55;
@@ -143,6 +145,7 @@
   footer.credit{position:relative; z-index:1; font:400 12px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:rgba(143,179,192,.55); text-align:center; padding-inline:16px}
   footer.credit span{transition:color .3s}
   footer.credit span:hover{color:var(--gold)}
+  footer.credit b{font-weight:600; color:rgba(232,251,255,.75)}
 
   @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
   @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -162,13 +165,14 @@
 
 <div class="aurora" aria-hidden="true"></div>
 <canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="world" aria-hidden="true"></canvas>
 
 <main class="stage">
   <section class="card" id="card" aria-live="polite">
     <span class="stamp">Urgent</span>
-    <p class="from">A message from Eddie, who built an entire website for this</p>
+    <p class="from">A message from Mister Warm &amp; Easy, who built this entire site for this</p>
     <h1>Will you go out <span class="pop">with me?</span></h1>
-    <p class="sub">Think carefully. Or don't. There's only one right answer.</p>
+    <p class="sub">Think carefully. Or don't. I am literally not taking no for an answer.</p>
 
     <svg class="blob" viewBox="0 0 150 130" aria-hidden="true">
       <defs>
@@ -204,10 +208,11 @@
     <p class="count" id="count" hidden></p>
   </section>
 
-  <footer class="credit"><span>Designed &amp; Crafted by Eddie Bila</span></footer>
+  <footer class="credit"><span>Designed and Developed by: <b>Eddie Bila</b></span></footer>
 </main>
 <canvas id="confetti"></canvas>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 (() => {
@@ -251,7 +256,101 @@
     sctx.globalAlpha = 1;
     if (!reduced) requestAnimationFrame(drawSky);
   }
-  requestAnimationFrame(drawSky);
+  const world3D = startWorld();
+  if (!world3D) requestAnimationFrame(drawSky);
+
+
+  /* ---------- 3D world: glossy hearts drifting through a starfield ---------- */
+  function startWorld(){
+    if (!window.THREE) return false;
+    const canvas = $('#world');
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true}); } catch { return false; }
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x00141d, 0.028);
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
+    camera.position.set(0, 0, 18);
+    const resize = () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); };
+    resize(); addEventListener('resize', resize);
+
+    scene.add(new THREE.AmbientLight(0x406070, 0.9));
+    const key = new THREE.PointLight(0x22d3ee, 2.2, 80); key.position.set(10, 12, 16); scene.add(key);
+    const rim = new THREE.PointLight(0xff4f93, 2.0, 80); rim.position.set(-14, -8, 10); scene.add(rim);
+    const top = new THREE.DirectionalLight(0xffffff, 0.6); top.position.set(0, 10, 5); scene.add(top);
+
+    // heart shape
+    const hs = new THREE.Shape();
+    hs.moveTo(0, -1.1);
+    hs.bezierCurveTo(-0.2, -0.85, -1.6, 0.0, -1.6, 0.75);
+    hs.bezierCurveTo(-1.6, 1.45, -0.9, 1.75, -0.45, 1.6);
+    hs.bezierCurveTo(-0.15, 1.5, 0, 1.2, 0, 1.05);
+    hs.bezierCurveTo(0, 1.2, 0.15, 1.5, 0.45, 1.6);
+    hs.bezierCurveTo(0.9, 1.75, 1.6, 1.45, 1.6, 0.75);
+    hs.bezierCurveTo(1.6, 0.0, 0.2, -0.85, 0, -1.1);
+    const heartGeo = new THREE.ExtrudeGeometry(hs, {depth:0.55, bevelEnabled:true, bevelSegments:6, steps:1, bevelSize:0.28, bevelThickness:0.3, curveSegments:24});
+    heartGeo.center();
+    const ringGeo = new THREE.TorusGeometry(1, 0.28, 20, 60);
+    const orbGeo = new THREE.IcosahedronGeometry(0.9, 2);
+
+    const colors = [0xff4f93, 0x22d3ee, 0xffd84d, 0x5ef0b0, 0xa78bfa, 0xff9ab8];
+    const things = [];
+    const count = innerWidth < 600 ? 18 : 26;
+    const spreadX = innerWidth < 600 ? 16 : 36;
+    for (let i = 0; i < count; i++){
+      const c = colors[i % colors.length];
+      const kind = i % 5 === 3 ? 'ring' : (i % 7 === 5 ? 'orb' : 'heart');
+      const mat = new THREE.MeshPhysicalMaterial({color:c, emissive:c, emissiveIntensity:0.18, roughness:0.22, metalness:0.1, clearcoat:1, clearcoatRoughness:0.15});
+      const m = new THREE.Mesh(kind === 'ring' ? ringGeo : kind === 'orb' ? orbGeo : heartGeo, mat);
+      const s = 0.45 + Math.random()*0.8;
+      m.scale.setScalar(s);
+      m.position.set((Math.random()-0.5)*spreadX, (Math.random()-0.5)*26, -Math.random()*26 - 3);
+      m.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+      m.userData = {spin:(Math.random()-0.5)*0.012 + 0.004, rise:0.006 + Math.random()*0.012, bob:Math.random()*Math.PI*2};
+      scene.add(m); things.push(m);
+    }
+
+    // star particles
+    const starCount = 900, pos = new Float32Array(starCount*3), col = new Float32Array(starCount*3);
+    const tint = [new THREE.Color(0xe8fbff), new THREE.Color(0x8ae9f7), new THREE.Color(0xff9ab8), new THREE.Color(0xffd84d)];
+    for (let i = 0; i < starCount; i++){
+      pos[i*3] = (Math.random()-0.5)*90; pos[i*3+1] = (Math.random()-0.5)*60; pos[i*3+2] = -Math.random()*70 + 10;
+      const t = tint[Math.random() < 0.7 ? 0 : 1 + Math.floor(Math.random()*3)];
+      col[i*3] = t.r; col[i*3+1] = t.g; col[i*3+2] = t.b;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const stars3 = new THREE.Points(starGeo, new THREE.PointsMaterial({size:0.12, vertexColors:true, transparent:true, opacity:0.85, depthWrite:false}));
+    scene.add(stars3);
+
+    let burst = 0;
+    window.__worldBurst = () => { burst = 1; };
+    const clock = new THREE.Clock();
+    function frame(){
+      const t = clock.getElapsedTime();
+      camera.position.x += (mx*4 - camera.position.x) * 0.04;
+      camera.position.y += (-my*3 - camera.position.y) * 0.04;
+      camera.lookAt(0, 0, -6);
+      stars3.rotation.z = t * 0.01;
+      burst *= 0.97;
+      things.forEach(m => {
+        const u = m.userData;
+        m.rotation.y += u.spin * (1 + burst*8);
+        m.rotation.x += u.spin * 0.4;
+        m.position.y += u.rise * (1 + burst*6);
+        m.position.x += Math.sin(t*0.6 + u.bob) * 0.004;
+        if (m.position.y > 15) { m.position.y = -15; m.position.x = (Math.random()-0.5)*spreadX; }
+      });
+      key.position.x = Math.sin(t*0.3)*14;
+      renderer.render(scene, camera);
+      if (!reduced) requestAnimationFrame(frame);
+    }
+    frame();
+    canvas.classList.add('on');
+    sky.style.display = 'none';
+    return true;
+  }
 
   /* card tilt + eyes follow */
   addEventListener('pointermove', e => {
@@ -277,6 +376,7 @@
     ["Error 404: No not found.", "404"], ["Mom said it's my turn on the Yes button.", "Bye"],
     ["Okay now you're just enjoying this.", "Wheee"], ["The blob is calling your mother.", "Help"],
     ["Fine. The No button is shrinking out of shame.", "no"],
+    ["Told you. I am literally not taking no for an answer.", "..."],
   ];
   let tries = 0, done = false;
 
@@ -390,7 +490,7 @@
       <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in</button></div>
       <p class="hint" id="hint"></p>`;
     card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
-    if (!reduced) confetti();
+    if (!reduced) { confetti(); window.__worldBurst && window.__worldBurst(); }
     scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
     wirePlanner();
   });
@@ -476,7 +576,7 @@
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(143,179,192);
     ['1. Snacks will be provided. Good ones.','2. Bad jokes are included at no extra cost.','3. No refunds, no take-backs, no "actually wait".']
       .forEach((t,i) => doc.text(t, 10, 154 + i*4.6));
-    doc.setFontSize(6.5); doc.setTextColor(90,120,130); doc.text('DESIGNED & CRAFTED BY EDDIE BILA', W/2, H-5, {align:'center'});
+    doc.setFontSize(6.5); doc.setTextColor(90,120,130); doc.text('DESIGNED AND DEVELOPED BY: EDDIE BILA', W/2, H-5, {align:'center'});
     return doc;
   }
 
@@ -543,7 +643,7 @@
       </div>
       <div class="actions"><button type="button" class="btn ghost" id="redo">Change the plan</button></div>`;
     card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
-    if (!reduced) confetti();
+    if (!reduced) { confetti(); window.__worldBurst && window.__worldBurst(); }
     scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
     $('#sendPdf').addEventListener('click', () => sendToEddie(false));
     $('#redo').addEventListener('click', () => { done = false; card.style.transform = ''; plan.date = plan.time = plan.timeLabel = plan.vibe = null; yes.click(); });
