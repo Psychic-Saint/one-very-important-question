@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One Very Important Question</title>
+<meta name="author" content="Eddie Bila">
+<meta name="creator" content="Eddie Bila">
+<meta name="description" content="A very important question. There is only one right answer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gaegu:wght@400;700&family=Outfit:wght@400;600;800&display=swap">
+<style>
+  :root{
+    --space:#00141d; --space-2:#04202d; --panel:#06283a; --panel-2:#0a3348;
+    --cyan:#22d3ee; --cyan-soft:#8ae9f7; --pink:#ff4f93; --blush:#ff9ab8;
+    --butter:#ffd84d; --mint:#5ef0b0; --violet:#a78bfa; --gold:#d4af37;
+    --text:#e8fbff; --muted:#8fb3c0; --line:rgba(34,211,238,.28);
+    --display:"Bagel Fat One","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    --hand:"Gaegu","Comic Sans MS","Chalkboard SE",cursive;
+    --ui:"Outfit","Segoe UI",system-ui,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{min-height:100%}
+  body{
+    margin:0; background:var(--space); color:var(--text);
+    font-family:var(--ui); font-size:17px; overflow-x:hidden;
+  }
+  canvas#sky{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none}
+  .aurora{
+    position:fixed; inset:-20%; z-index:0; pointer-events:none; filter:blur(70px); opacity:.55;
+    background:
+      radial-gradient(28% 24% at 18% 22%, rgba(255,79,147,.45), transparent 70%),
+      radial-gradient(30% 26% at 82% 18%, rgba(34,211,238,.40), transparent 70%),
+      radial-gradient(26% 24% at 70% 86%, rgba(167,139,250,.38), transparent 70%),
+      radial-gradient(22% 20% at 20% 84%, rgba(94,240,176,.25), transparent 70%);
+    animation:drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes drift{to{transform:translate3d(3%,-2%,0) rotate(4deg)}}
+
+  .stage{position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-inline:16px; padding-block:40px 20px}
+  .card{
+    position:relative; width:100%; max-width:600px; text-align:center;
+    background:linear-gradient(160deg, rgba(10,51,72,.92), rgba(4,32,45,.94));
+    border:1px solid var(--line); border-radius:30px; padding:34px 26px 30px;
+    box-shadow:0 0 0 1px rgba(34,211,238,.08), 0 30px 80px -20px rgba(0,0,0,.7), 0 0 60px -10px rgba(34,211,238,.35);
+    backdrop-filter:blur(8px); transform-style:preserve-3d; transition:transform .2s ease-out;
+    animation:arrive .9s cubic-bezier(.2,1.2,.4,1) both;
+  }
+  @keyframes arrive{from{opacity:0; transform:translateY(40px) scale(.94) rotateX(12deg)}}
+  .card::before{
+    content:""; position:absolute; inset:-1px; border-radius:inherit; padding:2px; pointer-events:none;
+    background:conic-gradient(from var(--spin,0deg), var(--cyan), var(--pink), var(--butter), var(--mint), var(--violet), var(--cyan));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude;
+    opacity:.85; animation:spin 6s linear infinite;
+  }
+  @property --spin{syntax:"<angle>"; initial-value:0deg; inherits:false}
+  @keyframes spin{to{--spin:360deg}}
+
+  .stamp{
+    position:absolute; top:-16px; right:20px; transform:rotate(6deg);
+    background:var(--butter); color:var(--space); border-radius:10px;
+    padding:4px 14px; font:800 13px/1.2 var(--ui); letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:0 6px 18px -4px rgba(255,216,77,.6);
+  }
+  .from{margin:0; font:400 21px/1.2 var(--hand); color:var(--cyan-soft)}
+  h1{font-family:var(--display); font-weight:400; font-size:clamp(38px,9vw,62px); line-height:1.02; margin:8px 0 6px; text-wrap:balance; letter-spacing:.01em}
+  h1 .pop{background:linear-gradient(90deg,var(--pink),var(--butter),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .sub{margin:0 auto 4px; max-width:34ch; font:400 23px/1.25 var(--hand); color:var(--text)}
+  svg.blob{width:156px; height:136px; display:block; margin:10px auto 0; overflow:visible; filter:drop-shadow(0 10px 24px rgba(255,79,147,.45))}
+  .taunt{min-height:1.4em; margin:8px 0 16px; font:700 25px/1.2 var(--hand); color:var(--butter)}
+  .buttons{display:flex; gap:20px; justify-content:center; align-items:center; flex-wrap:wrap; min-height:86px}
+
+  button,.btn{
+    font-family:var(--display); font-size:26px; letter-spacing:.02em; cursor:pointer; text-decoration:none;
+    border:0; border-radius:999px; padding:14px 38px; color:var(--space);
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none;
+    transition:transform .15s, box-shadow .2s, opacity .2s;
+  }
+  button:focus-visible,.btn:focus-visible,.chip:focus-visible,input:focus-visible{outline:3px dashed var(--butter); outline-offset:4px}
+  #yes{
+    background:linear-gradient(135deg,var(--mint),var(--cyan)); transform-origin:center;
+    box-shadow:0 0 0 4px rgba(34,211,238,.18), 0 10px 30px -6px rgba(34,211,238,.8);
+    transition:transform .3s cubic-bezier(.3,1.6,.5,1), box-shadow .2s;
+  }
+  #yes:hover{box-shadow:0 0 0 7px rgba(34,211,238,.25), 0 14px 40px -6px rgba(34,211,238,1)}
+  #no{background:transparent; color:var(--pink); border:2px solid var(--pink); z-index:40; white-space:nowrap; box-shadow:0 0 22px -6px rgba(255,79,147,.8)}
+  #no.loose{position:fixed; background:var(--space); transition:left .28s cubic-bezier(.2,1.4,.4,1), top .28s cubic-bezier(.2,1.4,.4,1), transform .2s}
+  .count{margin:18px 0 0; font-size:14px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-variant-numeric:tabular-nums}
+
+  /* planner */
+  .step{margin-top:22px; text-align:left}
+  .step h2{font:800 13px/1 var(--ui); letter-spacing:.16em; text-transform:uppercase; color:var(--cyan); margin:0 0 10px; display:flex; align-items:center; gap:10px}
+  .step h2::after{content:""; flex:1; height:1px; background:var(--line)}
+  .days{display:flex; gap:10px; overflow-x:auto; padding:4px 2px 12px; scroll-snap-type:x mandatory; scrollbar-width:thin; scrollbar-color:var(--cyan) transparent}
+  .chip{
+    flex:0 0 auto; scroll-snap-align:start; cursor:pointer; color:var(--text);
+    background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:16px;
+    font-family:var(--ui); font-size:15px; font-weight:600; letter-spacing:0; padding:10px 14px;
+    box-shadow:none; transition:transform .15s, background .2s, border-color .2s, color .2s;
+  }
+  .chip:hover{transform:translateY(-2px); border-color:var(--cyan)}
+  .chip[aria-pressed="true"]{background:var(--c,var(--cyan)); border-color:transparent; color:var(--space); box-shadow:0 8px 22px -8px var(--c,var(--cyan))}
+  .day{width:74px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 6px}
+  .day .dow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; opacity:.8}
+  .day .dnum{font:400 28px/1 var(--display)}
+  .day .mon{font-size:12px; opacity:.8}
+  .grid{display:flex; flex-wrap:wrap; gap:10px}
+  .grid .chip small{display:block; font-weight:400; font-size:12px; opacity:.8}
+  .custom{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:10px; color:var(--muted); font-size:15px}
+  .custom input{
+    font:600 15px var(--ui); color:var(--text); color-scheme:dark;
+    background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 12px;
+  }
+  .lock{display:block; width:100%; margin-top:24px}
+  .lock-btn{width:100%; background:linear-gradient(90deg,var(--pink),var(--butter)); box-shadow:0 12px 34px -10px rgba(255,79,147,.9)}
+  .lock-btn[aria-disabled="true"]{opacity:.55}
+  .hint{min-height:1.3em; margin:10px 0 0; text-align:center; font:700 21px/1.2 var(--hand); color:var(--butter)}
+
+  /* ticket */
+  .ticket{margin:20px 0 6px; border-radius:22px; overflow:hidden; text-align:left; background:#f7fdff; color:var(--space); box-shadow:0 20px 50px -18px rgba(34,211,238,.7)}
+  .ticket .top{background:linear-gradient(120deg,var(--pink),var(--violet) 55%,var(--cyan)); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:10px}
+  .ticket .top b{font:400 26px/1 var(--display); white-space:nowrap; letter-spacing:.03em}
+  .ticket .top span{font:800 12px/1 var(--ui); letter-spacing:.2em; text-transform:uppercase; opacity:.9}
+  .ticket .body{padding:18px 20px 8px; display:grid; grid-template-columns:1fr 1fr; gap:14px 18px}
+  .ticket .body .wide{grid-column:1/-1}
+  .ticket dt{font:800 11px/1 var(--ui); letter-spacing:.18em; text-transform:uppercase; color:#50707c; margin-bottom:4px}
+  .ticket dd{margin:0; font:400 24px/1.1 var(--display)}
+  .ticket .tear{border-top:2px dashed #b7d6df; margin:10px 20px 0; position:relative}
+  .ticket .terms{padding:12px 20px 16px; font:400 19px/1.3 var(--hand)}
+  .ticket .terms ol{margin:4px 0 0; padding-left:1.2em}
+  .ticket .sig{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:0 20px 16px; font:600 13px var(--ui); color:#50707c}
+  .actions{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:18px}
+  .actions .btn{font-size:20px; padding:12px 24px}
+  .wa{background:linear-gradient(135deg,var(--mint),#25d366)}
+  .copy{background:linear-gradient(135deg,var(--butter),#ffb347)}
+  .ghost{background:transparent; color:var(--cyan-soft); border:1px solid var(--line); font-family:var(--ui); font-weight:600; font-size:15px !important}
+
+  canvas#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60}
+
+  footer.credit{position:relative; z-index:1; font:400 12px/1.4 var(--ui); letter-spacing:.14em; text-transform:uppercase; color:rgba(143,179,192,.55); text-align:center; padding-inline:16px}
+  footer.credit a{color:inherit; text-decoration:none; transition:color .3s}
+  footer.credit a:hover, footer.credit a:focus-visible{color:var(--gold)}
+
+  @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .wobble{animation:wobble .4s; transform-origin:75px 110px}
+  .bouncy{animation:bounce .9s ease-in-out infinite}
+  @media (max-width:480px){
+    .card{padding:30px 18px 24px}
+    button,.btn{font-size:22px; padding:12px 28px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .aurora,.card,.card::before,.wobble,.bouncy{animation:none}
+    #no.loose,#yes{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"></div>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<main class="stage">
+  <section class="card" id="card" aria-live="polite">
+    <span class="stamp">Urgent</span>
+    <p class="from">A message from Eddie, who built an entire website for this</p>
+    <h1>Will you go out <span class="pop">with me?</span></h1>
+    <p class="sub">Think carefully. Or don't. There's only one right answer.</p>
+
+    <svg class="blob" viewBox="0 0 150 130" aria-hidden="true">
+      <defs>
+        <radialGradient id="blobFill" cx="40%" cy="30%" r="75%">
+          <stop offset="0" stop-color="#ffc2d6"/><stop offset=".55" stop-color="#ff7fa8"/><stop offset="1" stop-color="#e2447d"/>
+        </radialGradient>
+      </defs>
+      <g class="blob-body" id="blobBody">
+        <path d="M75 12c38 0 62 26 62 60s-22 50-62 50S13 106 13 72 37 12 75 12z" fill="url(#blobFill)" stroke="#00141d" stroke-width="4"/>
+        <ellipse cx="52" cy="34" rx="14" ry="7" fill="#fff" opacity=".45" transform="rotate(-20 52 34)"/>
+        <ellipse cx="38" cy="84" rx="10" ry="6" fill="#ff4f93" opacity=".7"/>
+        <ellipse cx="112" cy="84" rx="10" ry="6" fill="#ff4f93" opacity=".7"/>
+        <g id="eyes">
+          <circle cx="55" cy="62" r="13" fill="#fff" stroke="#00141d" stroke-width="3"/>
+          <circle cx="95" cy="62" r="13" fill="#fff" stroke="#00141d" stroke-width="3"/>
+          <circle id="pupilL" cx="55" cy="62" r="6" fill="#00141d"/>
+          <circle id="pupilR" cx="95" cy="62" r="6" fill="#00141d"/>
+        </g>
+        <g id="heartEyes" hidden>
+          <path d="M55 72l-11-11a7 7 0 0 1 11-8 7 7 0 0 1 11 8z" fill="#22d3ee" stroke="#00141d" stroke-width="3"/>
+          <path d="M95 72l-11-11a7 7 0 0 1 11-8 7 7 0 0 1 11 8z" fill="#22d3ee" stroke="#00141d" stroke-width="3"/>
+        </g>
+        <path id="mouth" d="M60 92q15 14 30 0" fill="none" stroke="#00141d" stroke-width="4" stroke-linecap="round"/>
+        <g id="tear" hidden><path d="M44 76q-5 10 0 14q5-4 0-14z" fill="#8ae9f7" stroke="#00141d" stroke-width="2"/></g>
+      </g>
+    </svg>
+
+    <p class="taunt" id="taunt"></p>
+    <div class="buttons">
+      <button id="yes" type="button">YES</button>
+      <button id="no" type="button">No</button>
+    </div>
+    <p class="count" id="count" hidden></p>
+  </section>
+
+  <footer class="credit"><a href="https://weblueprints.co.za" target="_blank" rel="noopener">Designed &amp; Crafted by Warm &amp; Easy Blueprints</a></footer>
+</main>
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+  /* Optional: put Eddie's WhatsApp number here in international format, e.g. '27821234567'.
+     Left empty, the button opens WhatsApp so she can pick him from her chats. */
+  const EDDIE_WHATSAPP = '';
+
+  const $ = s => document.querySelector(s);
+  const yes = $('#yes'), no = $('#no'), taunt = $('#taunt'), count = $('#count'), card = $('#card');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- starfield + floating hearts ---------- */
+  const sky = $('#sky'), sctx = sky.getContext('2d');
+  let W, H, mx = 0, my = 0;
+  const palette = ['#22d3ee','#ff4f93','#ffd84d','#5ef0b0','#a78bfa'];
+  const stars = [], floaters = [];
+  function sizeSky(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight; sky.width = W*dpr; sky.height = H*dpr; sctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  sizeSky(); addEventListener('resize', sizeSky);
+  for (let i = 0; i < 160; i++) stars.push({x:Math.random(), y:Math.random(), z:Math.random()*0.9+0.1, t:Math.random()*6});
+  for (let i = 0; i < 14; i++) floaters.push({x:Math.random(), y:Math.random(), z:Math.random()*0.8+0.2, s:Math.random()*10+8, c:palette[i%palette.length], v:Math.random()*0.00025+0.0001, r:Math.random()*6});
+  function heart(ctx, x, y, s){ ctx.beginPath(); ctx.moveTo(x, y+s*0.35); ctx.bezierCurveTo(x-s, y-s*0.3, x-s*0.45, y-s, x, y-s*0.45); ctx.bezierCurveTo(x+s*0.45, y-s, x+s, y-s*0.3, x, y+s*0.35); ctx.fill(); }
+  function drawSky(t){
+    sctx.clearRect(0,0,W,H);
+    stars.forEach(s => {
+      const x = (s.x*W + mx*s.z*28 + W) % W, y = (s.y*H + my*s.z*28 + H) % H;
+      sctx.globalAlpha = 0.35 + 0.45*Math.abs(Math.sin(t/1400 + s.t));
+      sctx.fillStyle = s.z > 0.8 ? '#8ae9f7' : '#e8fbff';
+      sctx.fillRect(x, y, s.z*1.8, s.z*1.8);
+    });
+    floaters.forEach(f => {
+      if (!reduced) f.y -= f.v;
+      if (f.y < -0.05) { f.y = 1.05; f.x = Math.random(); }
+      sctx.globalAlpha = 0.22 + f.z*0.25; sctx.fillStyle = f.c;
+      sctx.shadowColor = f.c; sctx.shadowBlur = 18;
+      heart(sctx, f.x*W + mx*f.z*60, f.y*H + my*f.z*60 + Math.sin(t/900 + f.r)*6, f.s*f.z + 6);
+      sctx.shadowBlur = 0;
+    });
+    sctx.globalAlpha = 1;
+    if (!reduced) requestAnimationFrame(drawSky);
+  }
+  requestAnimationFrame(drawSky);
+
+  /* card tilt + eyes follow */
+  addEventListener('pointermove', e => {
+    mx = (e.clientX / innerWidth - 0.5); my = (e.clientY / innerHeight - 0.5);
+    if (!reduced && !done && e.pointerType === 'mouse') card.style.transform = `perspective(900px) rotateY(${mx*6}deg) rotateX(${-my*6}deg)`;
+    const pL = $('#pupilL'), pR = $('#pupilR');
+    if (!pL || !pL.isConnected || pL.closest('[hidden]')) return;
+    [[pL,55],[pR,95]].forEach(([p,cx]) => {
+      const b = p.ownerSVGElement.getBoundingClientRect();
+      const sx = b.left + (cx/150)*b.width, sy = b.top + (62/130)*b.height;
+      const a = Math.atan2(e.clientY - sy, e.clientX - sx);
+      p.setAttribute('cx', cx + Math.cos(a)*5); p.setAttribute('cy', 62 + Math.sin(a)*5);
+    });
+  });
+
+  /* ---------- the runaway No ---------- */
+  const lines = [
+    ["Whoa whoa whoa.", "Nope"], ["That button is shy.", "Still no?"], ["Are you sure sure?", "Are you sure?"],
+    ["The No button has left the chat.", "Catch me"], ["It's faster than you. Accept it.", "Too slow"],
+    ["Eddie is watching this with snacks.", "Pls no"], ["You're hurting the blob's feelings.", "I'm scared"],
+    ["Legally, this counts as flirting.", "Why tho"], ["The Yes button is getting jealous. And bigger.", "Unlucky"],
+    ["Have you tried the big glowing one?", "Nah"], ["This could go on forever. I have unlimited data.", "Lol"],
+    ["Error 404: No not found.", "404"], ["Mom said it's my turn on the Yes button.", "Bye"],
+    ["Okay now you're just enjoying this.", "Wheee"], ["The blob is calling your mother.", "Help"],
+    ["Fine. The No button is shrinking out of shame.", "no"],
+  ];
+  let tries = 0, done = false;
+
+  function moveNo(e){
+    if (done) return;
+    if (e && e.cancelable) e.preventDefault();
+    const [msg, label] = lines[Math.min(tries, lines.length - 1)];
+    tries++;
+    taunt.textContent = msg; no.textContent = label;
+    count.hidden = false; count.textContent = `Failed escape attempts: ${tries}`;
+    yes.style.transform = `scale(${Math.min(1 + tries*0.14, 2.6)})`;
+    const noScale = Math.max(1 - Math.max(0, tries - 8)*0.07, 0.45);
+    $('#mouth').setAttribute('d', tries > 5 ? 'M60 100q15 -12 30 0' : 'M62 96q13 0 26 0');
+    $('#tear').toggleAttribute('hidden', tries < 6);
+    const blob = $('#blobBody'); blob.classList.remove('wobble'); void blob.offsetWidth; blob.classList.add('wobble');
+
+    const r = no.getBoundingClientRect();
+    if (!no.classList.contains('loose')){ document.body.appendChild(no); no.style.left = r.left+'px'; no.style.top = r.top+'px'; no.classList.add('loose'); void no.offsetWidth; }
+    const w = r.width, h = r.height, pad = 16, yr = yes.getBoundingClientRect();
+    const pt = e && e.touches && e.touches[0] ? e.touches[0] : e;
+    const px = pt && pt.clientX != null ? pt.clientX : r.left, py = pt && pt.clientY != null ? pt.clientY : r.top;
+    let x, y, ok = false;
+    for (let i = 0; i < 40 && !ok; i++){
+      x = pad + Math.random()*Math.max(1, innerWidth - w - pad*2);
+      y = pad + Math.random()*Math.max(1, innerHeight - h - pad*2);
+      const hitsYes = x < yr.right+12 && x+w > yr.left-12 && y < yr.bottom+12 && y+h > yr.top-12;
+      ok = !hitsYes && Math.hypot(x+w/2-px, y+h/2-py) > 140;
+    }
+    no.style.left = x+'px'; no.style.top = y+'px';
+    no.style.transform = `scale(${noScale}) rotate(${(Math.random()*24-12).toFixed(1)}deg)`;
+  }
+  no.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') moveNo(e); });
+  no.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') moveNo(e); });
+  no.addEventListener('touchstart', moveNo, {passive:false});
+  no.addEventListener('focus', () => { moveNo(); no.blur(); });
+  no.addEventListener('click', e => { e.preventDefault(); moveNo(e); });
+  addEventListener('resize', () => {
+    if (!no.isConnected || !no.classList.contains('loose')) return;
+    const r = no.getBoundingClientRect();
+    no.style.left = Math.min(r.left, innerWidth - r.width - 16)+'px';
+    no.style.top = Math.min(r.top, innerHeight - r.height - 16)+'px';
+  });
+
+  /* ---------- YES: plan the date ---------- */
+  const blobSVG = () => {
+    const svg = $('#card svg.blob').cloneNode(true);
+    svg.querySelector('#eyes').setAttribute('hidden','');
+    svg.querySelector('#heartEyes').removeAttribute('hidden');
+    svg.querySelector('#tear').setAttribute('hidden','');
+    const m = svg.querySelector('#mouth'); m.setAttribute('d','M56 90q19 22 38 0z'); m.setAttribute('fill','#00141d');
+    svg.querySelector('#blobBody').classList.remove('wobble');
+    if (!reduced) svg.querySelector('#blobBody').classList.add('bouncy');
+    return svg.outerHTML;
+  };
+  const plan = {date:null, time:null, timeLabel:null, vibe:null};
+  const fmtLong = d => d.toLocaleDateString('en-ZA', {weekday:'long', day:'numeric', month:'long'});
+  const pad2 = n => String(n).padStart(2,'0');
+  const isoDay = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+  yes.addEventListener('click', () => {
+    if (done) return;
+    done = true; no.remove();
+    const brag = tries === 0 ? "First try. No hesitation. Iconic."
+      : `It only took ${tries} failed attempt${tries===1?'':'s'} at saying no. Respect.`;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = Array.from({length:14}, (_, i) => { const d = new Date(today); d.setDate(d.getDate()+i+1); return d; });
+    const dayColors = ['var(--cyan)','var(--pink)','var(--butter)','var(--mint)','var(--violet)'];
+    const blob = blobSVG();
+    card.style.transform = '';
+    card.innerHTML = `
+      <span class="stamp">Official</span>
+      <p class="from">No take-backs. It's in writing now.</p>
+      <h1>YAAAY! <span class="pop">It's a date.</span></h1>
+      <p class="sub">${brag}</p>
+      ${blob}
+      <p class="sub" style="margin-top:10px">Now the important bit. When are you free?</p>
+
+      <div class="step">
+        <h2>Pick a day</h2>
+        <div class="days" role="group" aria-label="Pick a day">
+          ${days.map((d,i) => `<button type="button" class="chip day" aria-pressed="false" data-date="${isoDay(d)}" style="--c:${dayColors[i%5]}">
+            <span class="dow">${i===0?'Tmrw':d.toLocaleDateString('en-ZA',{weekday:'short'})}</span>
+            <span class="dnum">${d.getDate()}</span>
+            <span class="mon">${d.toLocaleDateString('en-ZA',{month:'short'})}</span></button>`).join('')}
+        </div>
+        <label class="custom" for="dateOther">Further out? Pick any date
+          <input type="date" id="dateOther" min="${isoDay(days[0])}"></label>
+      </div>
+
+      <div class="step">
+        <h2>Pick a time</h2>
+        <div class="grid" role="group" aria-label="Pick a time">
+          <button type="button" class="chip time" aria-pressed="false" data-time="10:00" data-label="Brunch" style="--c:var(--butter)">Brunch<small>10:00</small></button>
+          <button type="button" class="chip time" aria-pressed="false" data-time="12:30" data-label="Lunch" style="--c:var(--mint)">Lunch<small>12:30</small></button>
+          <button type="button" class="chip time" aria-pressed="false" data-time="17:30" data-label="Golden hour" style="--c:var(--pink)">Golden hour<small>17:30</small></button>
+          <button type="button" class="chip time" aria-pressed="false" data-time="19:00" data-label="Dinner" style="--c:var(--violet)">Dinner<small>19:00</small></button>
+        </div>
+        <label class="custom" for="timeOther">Or your own time
+          <input type="time" id="timeOther" step="900"></label>
+      </div>
+
+      <div class="step">
+        <h2>Pick the vibe</h2>
+        <div class="grid" role="group" aria-label="Pick the vibe">
+          ${['Coffee & chats','Proper dinner','Movies','Picnic','Arcade & ice cream','Eddie decides']
+            .map((v,i) => `<button type="button" class="chip vibe" aria-pressed="false" data-vibe="${v}" style="--c:${dayColors[i%5]}">${v.replace('&','&amp;')}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in</button></div>
+      <p class="hint" id="hint"></p>`;
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    if (!reduced) confetti();
+    scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
+    wirePlanner();
+  });
+
+  function selectIn(selector, btn){
+    card.querySelectorAll(selector).forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  }
+  function refreshLock(){
+    const ready = plan.date && plan.time;
+    $('#lockIn').setAttribute('aria-disabled', String(!ready));
+    if (ready) $('#hint').textContent = '';
+  }
+  function wirePlanner(){
+    card.querySelectorAll('.chip.day').forEach(b => b.addEventListener('click', () => {
+      selectIn('.chip.day', b); $('#dateOther').value = '';
+      plan.date = new Date(b.dataset.date + 'T00:00'); refreshLock();
+    }));
+    $('#dateOther').addEventListener('change', e => {
+      if (!e.target.value) return;
+      selectIn('.chip.day', null); plan.date = new Date(e.target.value + 'T00:00'); refreshLock();
+    });
+    card.querySelectorAll('.chip.time').forEach(b => b.addEventListener('click', () => {
+      selectIn('.chip.time', b); $('#timeOther').value = '';
+      plan.time = b.dataset.time; plan.timeLabel = b.dataset.label; refreshLock();
+    }));
+    $('#timeOther').addEventListener('change', e => {
+      if (!e.target.value) return;
+      selectIn('.chip.time', null); plan.time = e.target.value; plan.timeLabel = null; refreshLock();
+    });
+    card.querySelectorAll('.chip.vibe').forEach(b => b.addEventListener('click', () => {
+      selectIn('.chip.vibe', b); plan.vibe = b.dataset.vibe;
+    }));
+    $('#lockIn').addEventListener('click', () => {
+      if (!plan.date) return nudge("Nice try. Pick a day first.");
+      if (!plan.time) return nudge("A time too please. Eddie needs to iron a shirt.");
+      showTicket();
+    });
+  }
+  function nudge(msg){
+    const h = $('#hint'); h.textContent = msg;
+    const b = $('#lockIn'); b.classList.remove('wobble'); void b.offsetWidth; b.classList.add('wobble');
+  }
+
+  function summary(){
+    const vibe = plan.vibe || 'Eddie decides';
+    return `It's a date! 💘\n📅 ${fmtLong(plan.date)}\n⏰ ${plan.time}${plan.timeLabel ? ' ('+plan.timeLabel+')' : ''}\n✨ ${vibe}\nNo take-backs.`;
+  }
+  function showTicket(){
+    const vibe = plan.vibe || 'Eddie decides';
+    const signed = new Date().toLocaleDateString('en-ZA', {day:'numeric', month:'long', year:'numeric'});
+    const ref = 'WEB-' + Math.random().toString(36).slice(2,7).toUpperCase();
+    const waURL = (EDDIE_WHATSAPP ? `https://wa.me/${EDDIE_WHATSAPP}` : 'https://wa.me/') + '?text=' + encodeURIComponent(summary());
+    card.innerHTML = `
+      <span class="stamp">Confirmed</span>
+      <p class="from">Booking reference ${ref}</p>
+      <h1>See you <span class="pop">there.</span></h1>
+      ${blobSVG()}
+      <div class="ticket">
+        <div class="top"><b>ADMIT TWO</b><span>Non-refundable</span></div>
+        <dl class="body">
+          <div class="wide"><dt>Date</dt><dd>${fmtLong(plan.date)}</dd></div>
+          <div><dt>Time</dt><dd>${plan.time}${plan.timeLabel ? ` <small style="font-size:15px">${plan.timeLabel}</small>` : ''}</dd></div>
+          <div><dt>Vibe</dt><dd>${vibe.replace('&','&amp;')}</dd></div>
+        </dl>
+        <div class="tear"></div>
+        <div class="terms">
+          <strong>Terms &amp; Conditions</strong>
+          <ol>
+            <li>Snacks will be provided. Good ones.</li>
+            <li>Bad jokes are included at no extra cost.</li>
+            <li>Returns, refunds and "actually wait" are not accepted.</li>
+          </ol>
+        </div>
+        <div class="sig"><span>Agreed on ${signed}</span><span>Witness: the blob</span></div>
+      </div>
+      <p class="sub" style="margin-top:14px">Last step: send this to Eddie so he knows it's real.</p>
+      <div class="actions">
+        <a class="btn wa" href="${waURL}" target="_blank" rel="noopener">Send on WhatsApp</a>
+        <button type="button" class="btn copy" id="copyBtn">Copy details</button>
+      </div>
+      <div class="actions"><button type="button" class="btn ghost" id="redo">Change the plan</button></div>`;
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    if (!reduced) confetti();
+    scrollTo({top:0, behavior: reduced ? 'auto' : 'smooth'});
+    $('#copyBtn').addEventListener('click', async e => {
+      const btn = e.currentTarget;
+      try { await navigator.clipboard.writeText(summary()); btn.textContent = 'Copied!'; }
+      catch { btn.textContent = 'Screenshot it instead'; }
+      setTimeout(() => btn.textContent = 'Copy details', 2200);
+    });
+    $('#redo').addEventListener('click', () => { done = false; card.style.transform = ''; plan.date = plan.time = plan.timeLabel = plan.vibe = null; yes.click(); });
+  }
+
+  /* ---------- confetti ---------- */
+  function confetti(){
+    const c = $('#confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio || 1;
+    c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    const bits = Array.from({length:220}, () => ({
+      x:innerWidth/2, y:innerHeight*0.4, vx:(Math.random()-0.5)*17, vy:Math.random()*-17-4,
+      r:Math.random()*7+4, rot:Math.random()*6, vr:(Math.random()-0.5)*0.3,
+      c:palette[Math.floor(Math.random()*palette.length)], h:Math.random() < 0.35
+    }));
+    const start = performance.now();
+    (function tick(t){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      bits.forEach(b => {
+        b.vy += 0.35; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.rot += b.vr;
+        ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot); ctx.fillStyle = b.c;
+        if (b.h) heart(ctx, 0, 0, b.r*1.4); else ctx.fillRect(-b.r/2,-b.r/4,b.r,b.r/2);
+        ctx.restore();
+      });
+      if (t - start < 5500) requestAnimationFrame(tick); else ctx.clearRect(0,0,innerWidth,innerHeight);
+    })(start);
+  }
+})();
+</script>
+</body>
+</html>
