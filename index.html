@@ -212,7 +212,7 @@
 (() => {
   /* Optional: put Eddie's WhatsApp number here in international format, e.g. '27821234567'.
      Left empty, the button opens WhatsApp so she can pick him from her chats. */
-  const EDDIE_WHATSAPP = '';
+  const EDDIE_WHATSAPP = '27843232662';
 
   const $ = s => document.querySelector(s);
   const yes = $('#yes'), no = $('#no'), taunt = $('#taunt'), count = $('#count'), card = $('#card');
@@ -385,7 +385,7 @@
         </div>
       </div>
 
-      <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in</button></div>
+      <div class="lock"><button type="button" class="btn lock-btn" id="lockIn" aria-disabled="true">Lock it in &amp; tell Eddie</button></div>
       <p class="hint" id="hint"></p>`;
     card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
     if (!reduced) confetti();
@@ -425,6 +425,7 @@
       if (!plan.date) return nudge("Nice try. Pick a day first.");
       if (!plan.time) return nudge("A time too please. Eddie needs to iron a shirt.");
       showTicket();
+      try { window.open(waLink(), '_blank', 'noopener'); } catch {}
     });
   }
   function nudge(msg){
@@ -434,13 +435,15 @@
 
   function summary(){
     const vibe = plan.vibe || 'Eddie decides';
-    return `It's a date! 💘\n📅 ${fmtLong(plan.date)}\n⏰ ${plan.time}${plan.timeLabel ? ' ('+plan.timeLabel+')' : ''}\n✨ ${vibe}\nNo take-backs.`;
+    const time = plan.time + (plan.timeLabel ? ' (' + plan.timeLabel + ')' : '');
+    return `Hey Eddie 😊\n\nI said YES! 💘 ${tries ? `(after trying to say no ${tries} time${tries===1?'':'s'}, but the button wouldn't let me)` : '(first try, no hesitation)'}\n\nHere's our date:\n📅 ${fmtLong(plan.date)}\n⏰ ${time}\n✨ ${vibe}\n\nSnacks are on you. No take-backs. See you then! 🥰`;
   }
+  const waLink = () => `https://wa.me/${EDDIE_WHATSAPP}?text=${encodeURIComponent(summary())}`;
   function showTicket(){
     const vibe = plan.vibe || 'Eddie decides';
     const signed = new Date().toLocaleDateString('en-ZA', {day:'numeric', month:'long', year:'numeric'});
     const ref = 'WEB-' + Math.random().toString(36).slice(2,7).toUpperCase();
-    const waURL = (EDDIE_WHATSAPP ? `https://wa.me/${EDDIE_WHATSAPP}` : 'https://wa.me/') + '?text=' + encodeURIComponent(summary());
+    const waURL = waLink();
     card.innerHTML = `
       <span class="stamp">Confirmed</span>
       <p class="from">Booking reference ${ref}</p>
@@ -464,9 +467,9 @@
         </div>
         <div class="sig"><span>Agreed on ${signed}</span><span>Witness: the blob</span></div>
       </div>
-      <p class="sub" style="margin-top:14px">Last step: send this to Eddie so he knows it's real.</p>
+      <p class="sub" style="margin-top:14px">WhatsApp should have opened with a message for Eddie. Just hit send. If it didn't, tap below.</p>
       <div class="actions">
-        <a class="btn wa" href="${waURL}" target="_blank" rel="noopener">Send on WhatsApp</a>
+        <a class="btn wa" href="${waURL}" target="_blank" rel="noopener">Send Eddie the confirmation</a>
         <button type="button" class="btn copy" id="copyBtn">Copy details</button>
       </div>
       <div class="actions"><button type="button" class="btn ghost" id="redo">Change the plan</button></div>`;
